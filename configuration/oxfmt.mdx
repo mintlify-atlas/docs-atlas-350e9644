@@ -1,0 +1,48 @@
+---
+title: 'oxfmt formatter configuration'
+description: 'Code formatting options via oxfmt'
+---
+
+oxfmt is the code formatter used by ng-viteplus-config. It handles TypeScript, JavaScript, JSON, HTML, CSS, and SCSS files. Configuration lives in `.oxfmtrc.json` at the project root and is read automatically by the `vp fmt` command.
+
+## Full configuration
+
+```json .oxfmtrc.json
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "semi": true,
+  "printWidth": 180,
+  "tabWidth": 2,
+  "trailingComma": "all"
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `$schema` | string | — | Path to the oxfmt JSON schema file. Enables schema validation and in-editor autocomplete for `.oxfmtrc.json` in editors that support JSON Schema (VS Code, WebStorm, and others). |
+| `singleQuote` | boolean | `false` | When `true`, oxfmt uses single quotes for string literals in TypeScript and JavaScript files instead of double quotes. Template literals and strings that contain a single quote are unaffected. |
+| `semi` | boolean | `true` | When `true`, oxfmt appends a semicolon at the end of every statement. Set to `false` only if your team follows a no-semicolon style, and update the ESLint `semi` rule accordingly. |
+| `printWidth` | number | `80` | The maximum preferred line length before oxfmt wraps an expression. Set to `180` to allow longer lines, which suits wide-monitor workflows and reduces unnecessary wrapping in long Angular decorator metadata. This is a soft limit — oxfmt may produce lines slightly longer when wrapping would reduce readability. |
+| `tabWidth` | number | `2` | The number of spaces per indentation level. Applies to all file types formatted by oxfmt. |
+| `trailingComma` | string | `"all"` | Controls where oxfmt adds trailing commas. `"all"` inserts a trailing comma in every valid position: multi-line arrays, objects, function parameters, and function arguments. This is the recommended value for modern TypeScript projects. |
+
+<Tip>
+Trailing commas produce cleaner version control diffs when you add or remove items from multi-line arrays and objects. Without a trailing comma, adding a new last element also modifies the previous line (to add the comma), creating a two-line diff. With trailing commas already in place, only the new line appears in the diff, making code reviews easier and reducing merge conflicts.
+</Tip>
+
+## CLI commands
+
+Format all files in the project in place:
+
+```bash
+vp fmt
+```
+
+Check formatting without writing any changes. Exits with a non-zero status code if any file is not formatted, making it suitable for use in CI pipelines:
+
+```bash
+vp fmt --check
+```

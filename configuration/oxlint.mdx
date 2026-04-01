@@ -1,0 +1,185 @@
+---
+title: 'oxlint configuration'
+description: 'TypeScript and JavaScript lint rules via oxlint, including Angular-specific rules'
+---
+
+oxlint is the primary linter for TypeScript and JavaScript files in ng-viteplus-config. It runs via the `vp lint` command and applies rules from `.oxlintrc.json` at the project root.
+
+## Full configuration
+
+```json .oxlintrc.json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import"],
+  "jsPlugins": ["@angular-eslint/eslint-plugin"],
+  "ignorePatterns": ["dist/**", ".angular/**", "node_modules/**"],
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "categories": {
+    "correctness": "warn"
+  },
+  "rules": {
+    "no-debugger": "error",
+    "no-eval": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "eqeqeq": "error",
+    "no-fallthrough": "error",
+    "no-constant-binary-expression": "error",
+    "no-self-assign": "error",
+    "no-self-compare": "error",
+    "no-constant-condition": "warn",
+    "no-unsafe-optional-chaining": "error",
+    "no-loss-of-precision": "warn",
+    "no-duplicate-enum-values": "error",
+    "no-dupe-else-if": "error",
+    "no-console": "warn",
+    "no-alert": "error",
+    "no-caller": "error",
+    "no-new-wrappers": "error",
+    "no-throw-literal": "error",
+    "no-useless-escape": "warn",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    "@typescript-eslint/no-wrapper-object-types": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-empty-interface": "warn",
+    "import/no-duplicates": "warn",
+    "import/no-self-import": "error",
+    "@angular-eslint/no-output-native": "error",
+    "@angular-eslint/use-lifecycle-interface": "warn",
+    "@angular-eslint/no-input-rename": "error",
+    "@angular-eslint/no-output-rename": "error",
+    "@angular-eslint/component-class-suffix": "error",
+    "@angular-eslint/directive-class-suffix": "error",
+    "@angular-eslint/component-selector": [
+      "error",
+      { "type": "element", "prefix": "ngvpc", "style": "kebab-case" }
+    ],
+    "@angular-eslint/directive-selector": [
+      "error",
+      { "type": "attribute", "prefix": "ngvpc", "style": "camelCase" }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["*.spec.ts", "*.mock.ts", "**/test/**", "**/mock/**"],
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": "off"
+      }
+    }
+  ]
+}
+```
+
+## Top-level options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `$schema` | string | Path to the oxlint JSON schema. Enables editor validation and autocomplete when editing `.oxlintrc.json`. |
+| `plugins` | string[] | Built-in oxlint plugin packs to activate. `typescript` adds TS-specific rules; `import` adds module resolution rules. |
+| `jsPlugins` | string[] | External ESLint-compatible JS plugins loaded from `node_modules`. Used here to load `@angular-eslint/eslint-plugin` for Angular-specific rules. |
+| `ignorePatterns` | string[] | Glob patterns that oxlint skips entirely. Build output, Angular CLI cache, and third-party packages are excluded. |
+| `env` | object | Declares global environment assumptions. `browser: true` adds browser globals; `es2021: true` adds modern ECMAScript globals. |
+| `categories` | object | Sets a default severity for entire rule categories. `correctness: "warn"` applies a warning baseline to all correctness-category rules not individually configured. |
+| `rules` | object | Individual rule overrides. Each key is a rule ID; each value is a severity string (`"error"`, `"warn"`, `"off"`) or a tuple with options. |
+| `overrides` | array | File-pattern-specific rule configuration. Rules in an override apply only to files matching the given `files` globs, layered on top of the base configuration. |
+
+## Rules
+
+<AccordionGroup>
+  <Accordion title="Safety and correctness rules">
+
+    | Rule | Severity | Description |
+    |------|----------|-------------|
+    | `no-debugger` | error | Flags leftover `debugger` statements that pause execution in DevTools. These should never reach production. |
+    | `no-eval` | error | Disallows `eval()`, which executes arbitrary strings as code and is a significant security risk. |
+    | `no-var` | error | Requires `let` or `const` instead of `var`, which has function-scoped semantics that cause subtle bugs. |
+    | `prefer-const` | error | Requires `const` for bindings that are never reassigned after declaration. |
+    | `eqeqeq` | error | Requires `===` and `!==` instead of `==` and `!=`, which perform implicit type coercion. |
+    | `no-fallthrough` | error | Flags `switch` cases that fall through to the next case without a `break`, `return`, or `throw`. |
+    | `no-constant-binary-expression` | error | Flags binary expressions whose result is always the same value, indicating a logic error. |
+    | `no-self-assign` | error | Flags assignments where the left and right sides are identical (e.g., `x = x`), which have no effect. |
+    | `no-self-compare` | error | Flags comparisons of a value to itself (e.g., `x === x`), which are always `true` outside of `NaN` checks. |
+    | `no-constant-condition` | warn | Warns on conditions that are always truthy or always falsy, such as `if (true)` or `while (1)` outside of intentional loops. |
+    | `no-unsafe-optional-chaining` | error | Flags optional chaining expressions used in contexts where `undefined` would cause a runtime error, such as arithmetic operations. |
+    | `no-loss-of-precision` | warn | Warns on numeric literals that lose precision when converted to a JavaScript `Number` (IEEE 754). |
+    | `no-duplicate-enum-values` | error | Flags TypeScript enums where two or more members share the same value, which creates ambiguous reverse mappings. |
+    | `no-dupe-else-if` | error | Flags duplicate conditions in `else if` chains, which make one or more branches unreachable. |
+    | `no-console` | warn | Warns on `console.*` calls. Logging statements are often left in accidentally and should be removed or replaced with a structured logger. |
+    | `no-alert` | error | Disallows `alert()`, `confirm()`, and `prompt()`, which block the UI thread and are inappropriate in production Angular apps. |
+    | `no-caller` | error | Disallows `arguments.caller` and `arguments.callee`, which are deprecated and forbidden in strict mode. |
+    | `no-new-wrappers` | error | Disallows `new String()`, `new Number()`, and `new Boolean()`, which create object wrappers instead of primitives and behave unexpectedly in comparisons. |
+    | `no-throw-literal` | error | Requires that only `Error` objects (or subclasses) are thrown. Throwing strings or plain objects loses stack trace information. |
+    | `no-useless-escape` | warn | Warns on escape sequences in strings and regular expressions that have no effect, which indicates a misunderstanding of the syntax. |
+
+  </Accordion>
+
+  <Accordion title="TypeScript rules">
+
+    These rules are provided by the `typescript` plugin pack and enforce TypeScript-specific best practices.
+
+    | Rule | Severity | Description |
+    |------|----------|-------------|
+    | `@typescript-eslint/no-unused-vars` | warn | Warns on declared variables, parameters, or imports that are never read. Helps keep code clean and avoids confusion about intent. |
+    | `@typescript-eslint/no-non-null-assertion` | warn | Warns on the non-null assertion operator (`value!`), which bypasses TypeScript's null safety checks. Consider narrowing the type instead. |
+    | `@typescript-eslint/no-wrapper-object-types` | warn | Warns on the use of wrapper object types (`String`, `Number`, `Boolean`) in type positions. Use the primitive types (`string`, `number`, `boolean`) instead. |
+    | `@typescript-eslint/no-explicit-any` | warn | Warns on explicit `any` type annotations, which opt out of type checking entirely. Use a more specific type or `unknown`. |
+    | `@typescript-eslint/no-empty-interface` | warn | Warns on interface declarations with no members. An empty interface is almost always either incomplete or redundant. |
+
+  </Accordion>
+
+  <Accordion title="Import rules">
+
+    These rules are provided by the `import` plugin pack and enforce module import hygiene.
+
+    | Rule | Severity | Description |
+    |------|----------|-------------|
+    | `import/no-duplicates` | warn | Warns when two or more import statements in the same file import from the same module path. These can be merged into a single import. |
+    | `import/no-self-import` | error | Flags a module that imports from its own file path, which always indicates a mistake. |
+
+  </Accordion>
+
+  <Accordion title="Angular rules">
+
+    These rules are loaded via `jsPlugins` from `@angular-eslint/eslint-plugin` and enforce Angular coding conventions and correctness.
+
+    | Rule | Severity | Description |
+    |------|----------|-------------|
+    | `@angular-eslint/no-output-native` | error | Disallows `@Output()` property names that collide with native DOM event names (e.g., `click`, `focus`). Such names override native browser behavior. |
+    | `@angular-eslint/use-lifecycle-interface` | warn | Warns when a component or directive implements an Angular lifecycle method (e.g., `ngOnInit`) without also implementing the corresponding interface (e.g., `OnInit`). Implementing the interface improves type safety. |
+    | `@angular-eslint/no-input-rename` | error | Disallows renaming `@Input()` bindings with an alias (e.g., `@Input('alias') prop`). Aliases create a disconnect between the property name and its public API. |
+    | `@angular-eslint/no-output-rename` | error | Disallows renaming `@Output()` bindings with an alias for the same reasons as `no-input-rename`. |
+    | `@angular-eslint/component-class-suffix` | error | Requires that component class names end with the `Component` suffix, following Angular naming conventions. |
+    | `@angular-eslint/directive-class-suffix` | error | Requires that directive class names end with the `Directive` suffix. |
+    | `@angular-eslint/component-selector` | error | Requires component selectors to use element type, the `ngvpc` prefix, and kebab-case style (e.g., `ngvpc-my-widget`). |
+    | `@angular-eslint/directive-selector` | error | Requires directive selectors to use attribute type, the `ngvpc` prefix, and camelCase style (e.g., `[ngvpcMyDirective]`). |
+
+  </Accordion>
+</AccordionGroup>
+
+## Overrides
+
+Test and mock files receive a relaxed rule set so that stricter rules do not interfere with common testing patterns.
+
+The following file patterns are covered by the override:
+- `*.spec.ts` — Jasmine/Jest spec files
+- `*.mock.ts` — mock and stub definitions
+- `**/test/**` — files inside any `test/` directory
+- `**/mock/**` — files inside any `mock/` directory
+
+Rules relaxed in these files:
+
+| Rule | Override value | Reason |
+|------|---------------|--------|
+| `no-console` | off | Logging is acceptable and useful during test runs. |
+| `@typescript-eslint/no-explicit-any` | off | Test helpers and mocks frequently need `any` to simulate partial objects or spy return types. |
+| `@typescript-eslint/no-unused-vars` | off | Setup variables in `beforeEach` blocks or destructured fixtures may not be referenced in every test. |
+
+<Note>
+If your project uses a different component selector prefix (e.g., `app` instead of `ngvpc`), update the `prefix` value in both `@angular-eslint/component-selector` and `@angular-eslint/directive-selector` to match your prefix. The prefix must be consistent across both rules so that all generated selectors follow the same convention.
+</Note>

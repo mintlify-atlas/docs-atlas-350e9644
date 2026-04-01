@@ -1,80 +1,279 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Set up ng-viteplus-config in an existing Angular project in five steps."
 ---
 
-## Get started in three steps
+Follow these five steps to install the required packages, add all config files, register the npm scripts, and verify the full code quality pipeline.
 
-Get your documentation site running locally and make your first customization.
+<Steps>
+  <Step title="Install required packages">
+    Install `vite-plus` and all linting and formatting dependencies as dev dependencies.
 
-### Step 1: Set up your local environment
+    <CodeGroup>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    ```sh pnpm
+    pnpm install --save-dev vite-plus eslint jiti @typescript-eslint/utils @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/template-parser stylelint stylelint-config-standard-scss stylelint-config-recess-order stylelint-order
+    ```
 
-### Step 2: Deploy your changes
+    ```sh npm
+    npm install --save-dev vite-plus eslint jiti @typescript-eslint/utils @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/template-parser stylelint stylelint-config-standard-scss stylelint-config-recess-order stylelint-order
+    ```
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```sh yarn
+    yarn add --dev vite-plus eslint jiti @typescript-eslint/utils @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/template-parser stylelint stylelint-config-standard-scss stylelint-config-recess-order stylelint-order
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    </CodeGroup>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    This installs:
+    - `vite-plus` — the `vp` CLI that orchestrates all checks
+    - `eslint` + `jiti` — ESLint with TypeScript config file support
+    - `@typescript-eslint/utils`, `@angular-eslint/*` packages — Angular template linting
+    - `stylelint` + config packages — CSS/SCSS linting and property ordering
+  </Step>
 
-### Step 3: Go live
+  <Step title="Add config files">
+    Create all five configuration files in the root of your project.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    <AccordionGroup>
+      <Accordion title=".oxfmtrc.json — oxfmt formatter config">
+        Controls code formatting for TypeScript and JSON files. Sets single quotes, semicolons, a generous print width, and trailing commas for cleaner diffs.
+
+        ```json .oxfmtrc.json
+        {
+          "$schema": "./node_modules/oxfmt/configuration_schema.json",
+          "singleQuote": true,
+          "semi": true,
+          "printWidth": 180,
+          "tabWidth": 2,
+          "trailingComma": "all"
+        }
+        ```
+      </Accordion>
+
+      <Accordion title=".oxlintrc.json — oxlint rules config">
+        Configures `oxlint` with the TypeScript, import, and Angular plugins. Enforces correctness rules, Angular naming conventions, and lifecycle interface usage. Test files get relaxed rules via the `overrides` block.
+
+        ```json .oxlintrc.json
+        {
+          "$schema": "./node_modules/oxlint/configuration_schema.json",
+          "plugins": ["typescript", "import"],
+          "jsPlugins": ["@angular-eslint/eslint-plugin"],
+          "ignorePatterns": ["dist/**", ".angular/**", "node_modules/**"],
+          "env": { "browser": true, "es2021": true },
+          "categories": { "correctness": "warn" },
+          "rules": {
+            "no-debugger": "error",
+            "no-eval": "error",
+            "no-var": "error",
+            "prefer-const": "error",
+            "eqeqeq": "error",
+            "no-fallthrough": "error",
+            "no-constant-binary-expression": "error",
+            "no-self-assign": "error",
+            "no-self-compare": "error",
+            "no-constant-condition": "warn",
+            "no-unsafe-optional-chaining": "error",
+            "no-loss-of-precision": "warn",
+            "no-duplicate-enum-values": "error",
+            "no-dupe-else-if": "error",
+            "no-console": "warn",
+            "no-alert": "error",
+            "no-caller": "error",
+            "no-new-wrappers": "error",
+            "no-throw-literal": "error",
+            "no-useless-escape": "warn",
+            "@typescript-eslint/no-unused-vars": "warn",
+            "@typescript-eslint/no-non-null-assertion": "warn",
+            "@typescript-eslint/no-wrapper-object-types": "warn",
+            "@typescript-eslint/no-explicit-any": "warn",
+            "@typescript-eslint/no-empty-interface": "warn",
+            "import/no-duplicates": "warn",
+            "import/no-self-import": "error",
+            "@angular-eslint/no-output-native": "error",
+            "@angular-eslint/use-lifecycle-interface": "warn",
+            "@angular-eslint/no-input-rename": "error",
+            "@angular-eslint/no-output-rename": "error",
+            "@angular-eslint/component-class-suffix": "error",
+            "@angular-eslint/directive-class-suffix": "error",
+            "@angular-eslint/component-selector": ["error", {"type": "element", "prefix": "ngvpc", "style": "kebab-case"}],
+            "@angular-eslint/directive-selector": ["error", {"type": "attribute", "prefix": "ngvpc", "style": "camelCase"}]
+          },
+          "overrides": [
+            {
+              "files": ["*.spec.ts", "*.mock.ts", "**/test/**", "**/mock/**"],
+              "rules": {
+                "no-console": "off",
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-unused-vars": "off"
+              }
+            }
+          ]
+        }
+        ```
+
+        <Tip>
+          Update the `prefix` values in `component-selector` and `directive-selector` to match your project's selector prefix.
+        </Tip>
+      </Accordion>
+
+      <Accordion title="stylelintrc.json — Stylelint config">
+        Extends the standard SCSS config and the recess property order config. Ignores build output directories and relaxes a few rules that conflict with common Angular patterns.
+
+        ```json stylelintrc.json
+        {
+          "extends": ["stylelint-config-standard-scss", "stylelint-config-recess-order"],
+          "ignoreFiles": ["dist/**", "node_modules/**", ".angular/**"],
+          "rules": {
+            "color-no-invalid-hex": true,
+            "unit-no-unknown": true,
+            "property-no-unknown": true,
+            "declaration-block-no-duplicate-properties": [true, {"ignore": ["consecutive-duplicates-with-different-values"]}],
+            "color-named": "never",
+            "no-empty-source": null,
+            "no-descending-specificity": null,
+            "declaration-property-value-no-unknown": null,
+            "scss/no-global-function-names": null,
+            "scss/dollar-variable-pattern": null
+          }
+        }
+        ```
+      </Accordion>
+
+      <Accordion title="eslint.config.ts — ESLint flat config for Angular templates">
+        Uses the Angular template parser and plugin to lint `.html` template files. Enforces accessibility attributes, button types, and other template correctness rules.
+
+        ```typescript eslint.config.ts
+        import templateParser from '@angular-eslint/template-parser';
+        import templatePlugin from '@angular-eslint/eslint-plugin-template';
+
+        export default [
+          {
+            files: ['**/*.html'],
+            languageOptions: { parser: templateParser },
+            plugins: { '@angular-eslint/template': templatePlugin },
+            rules: {
+              '@angular-eslint/template/button-has-type': 'error',
+              '@angular-eslint/template/no-negated-async': 'warn',
+              '@angular-eslint/template/alt-text': 'error',
+              '@angular-eslint/template/click-events-have-key-events': 'warn',
+              '@angular-eslint/template/no-duplicate-attributes': 'error',
+              '@angular-eslint/template/no-autofocus': 'warn',
+              '@angular-eslint/template/table-scope': 'error',
+              '@angular-eslint/template/valid-aria': 'error'
+            }
+          }
+        ];
+        ```
+      </Accordion>
+
+      <Accordion title="vite.config.ts — staged-file tool mapping">
+        Defines which tools run against which file types during `vp staged`. TypeScript files are linted and fixed by `vp lint`, HTML and JSON files are formatted, and SCSS/CSS files are both formatted and linted.
+
+        ```typescript vite.config.ts
+        import { defineConfig } from 'vite-plus';
+
+        export default defineConfig({
+          lint: {
+            ignorePatterns: ['dist/**', '.angular/**', 'node_modules/**']
+          },
+          staged: {
+            '*.ts': 'vp lint --fix',
+            '*.{json,html}': 'vp fmt',
+            '*.html': 'eslint --fix',
+            '*.{css,scss}': ['vp fmt', 'stylelint --fix']
+          }
+        });
+        ```
+      </Accordion>
+    </AccordionGroup>
+  </Step>
+
+  <Step title="Add scripts to package.json">
+    Add the following `scripts` block to your `package.json`. The `postinstall` script copies the pre-commit hook into `.git/hooks/` automatically every time dependencies are installed.
+
+    ```json package.json
+    {
+      "scripts": {
+        "lint": "vp lint",
+        "lint:fix": "vp lint --fix",
+        "lint:html": "eslint \"src/**/*.html\"",
+        "lint:styles": "stylelint \"src/**/*.{css,scss}\"",
+        "lint:styles:fix": "stylelint \"src/**/*.{css,scss}\" --fix",
+        "format": "vp fmt --check",
+        "format:fix": "vp fmt",
+        "postinstall": "node -e require('fs').cpSync('scripts/pre-commit','.git/hooks/pre-commit');"
+      }
+    }
+    ```
+
+    Then create the hook source file at `scripts/pre-commit`:
+
+    ```sh scripts/pre-commit
+    #!/bin/sh
+    npx vp staged
+    ```
+
+    The `postinstall` script uses Node's `fs.cpSync` to copy `scripts/pre-commit` into `.git/hooks/pre-commit` automatically after every `pnpm install`. Any developer who clones the repository and installs dependencies will have the hook active immediately.
+  </Step>
+
+  <Step title="Install dependencies and activate the hook">
+    Run the package manager install command. This installs all dependencies and triggers `postinstall`, which copies the pre-commit hook into place.
+
+    <CodeGroup>
+
+    ```sh pnpm
+    pnpm install
+    ```
+
+    ```sh npm
+    npm install
+    ```
+
+    ```sh yarn
+    yarn install
+    ```
+
+    </CodeGroup>
+
+    After the install completes, verify the hook was installed:
+
+    ```sh
+    ls -la .git/hooks/pre-commit
+    ```
+
+    You should see the file listed as executable (`-rwxr-xr-x`).
+  </Step>
+
+  <Step title="Test the pipeline">
+    Stage all your files and make a test commit to verify the full pipeline runs.
+
+    ```sh
+    git add .
+    git commit -m "test: verify code quality pipeline"
+    ```
+
+    When you commit, `vp staged` runs each configured tool against only the staged files. Tools that support auto-fix (oxlint, oxfmt, stylelint, ESLint) will correct fixable issues in place and re-stage the changes before the commit proceeds.
+
+    <Note>
+      If any staged file contains errors that cannot be fixed automatically — such as a type violation or an inaccessible template element — the commit is blocked and the errors are printed to the terminal. Fix the reported issues, re-stage the files with `git add`, and commit again.
+    </Note>
+  </Step>
+</Steps>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="oxlint config reference" icon="shield-check" href="/configuration/oxlint">
+    Review every lint rule and learn how to customize the Angular selector prefixes.
+  </Card>
+  <Card title="ESLint template config" icon="code" href="/configuration/eslint-templates">
+    See all Angular template accessibility and correctness rules in detail.
+  </Card>
+  <Card title="Stylelint config reference" icon="paintbrush" href="/configuration/stylelint">
+    Understand the SCSS property ordering rules and how to extend the config.
+  </Card>
+  <Card title="Available commands" icon="terminal" href="/usage/commands">
+    Full reference for all `vp` CLI commands and their flags.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

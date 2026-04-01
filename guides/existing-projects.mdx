@@ -1,0 +1,88 @@
+---
+title: 'Initial cleanup for existing projects'
+description: 'How to integrate ng-viteplus-config into a project that already has code'
+---
+
+Adding `ng-viteplus-config` to a project that already has code almost always surfaces a large number of pre-existing lint and format violations. Running every check at once produces hundreds or thousands of errors, which is overwhelming and makes it hard to prioritise what to fix first.
+
+The recommended approach is to clean up incrementally, one tool at a time, and commit each batch of changes separately. This keeps diffs small and reviewable, and gives you a clear trail to follow if you need to revert a specific change.
+
+## Recommended cleanup sequence
+
+<Steps>
+  <Step title="Format all files first">
+    Run the formatter across the entire project:
+
+    ```sh
+    npx vp fmt
+    ```
+
+    Formatting is purely cosmetic — it reorders whitespace and quotes but never changes runtime behaviour. Running it first eliminates format noise from the output of subsequent lint steps, so you can focus lint reviews on real issues. Once you're happy with the diff, stage and commit:
+
+    ```sh
+    git add .
+    git commit -m "style: format all files with oxfmt"
+    ```
+  </Step>
+  <Step title="Auto-fix TypeScript and JavaScript lint issues">
+    Run the linter with the auto-fix flag:
+
+    ```sh
+    npx vp lint --fix
+    ```
+
+    This fixes safe, mechanical issues such as unused imports, missing semicolons, and other violations that have a single unambiguous correct form. Review the diff carefully before committing — some auto-fixes change code structure slightly and are worth a quick sanity check. When you're satisfied, stage and commit:
+
+    ```sh
+    git add .
+    git commit -m "fix: auto-fix lint issues with oxlint"
+    ```
+  </Step>
+  <Step title="Auto-fix style issues">
+    Run Stylelint with auto-fix on all CSS and SCSS files:
+
+    ```sh
+    npx stylelint "src/**/*.{css,scss}" --fix
+    ```
+
+    This handles property ordering and other mechanical SCSS and CSS violations. As with the previous step, review the diff before committing so you understand what changed. Stage and commit:
+
+    ```sh
+    git add .
+    git commit -m "style: auto-fix SCSS issues with Stylelint"
+    ```
+  </Step>
+  <Step title="Fix remaining manual issues">
+    After the auto-fixable passes are done, run a full check to see what remains:
+
+    ```sh
+    npx vp check
+    pnpm run lint:html
+    ```
+
+    The remaining issues require human judgment — logic errors, accessibility violations, overly complex expressions, and similar problems that a tool cannot safely rewrite on its own. Work through them in batches grouped by type or component, and commit each batch separately so reviewers can follow your reasoning.
+  </Step>
+</Steps>
+
+## Viewing all issues at once
+
+At any point during cleanup you can get a full picture of outstanding issues across all tools:
+
+```sh
+npx vp check
+pnpm run lint:html
+```
+
+<Warning>
+  The pre-commit hook runs checks on staged files only, not the whole project. During a cleanup migration it is normal to have outstanding issues in unstaged files. Use `npx vp check` manually to track overall progress across the entire project rather than relying on the pre-commit hook as a progress indicator.
+</Warning>
+
+<Tip>
+  Keep each cleanup commit focused on one tool or one category of fix. Mixing a formatter pass with manual logic fixes in the same commit makes the diff difficult to review and harder to revert if a specific change turns out to be incorrect.
+</Tip>
+
+## What to do about rules that are too noisy
+
+Occasionally a rule triggers frequently on patterns that are idiomatic in a particular codebase but are not genuine bugs. If a rule produces too many false positives to be actionable — and discussing whether the code should actually change isn't practical in the near term — it is better to disable or downgrade the rule in the config than to pepper the codebase with inline suppression comments.
+
+See the [customization guide](/guides/customization) for instructions on changing rule severity, disabling rules for specific file patterns, and other ways to adapt the default ruleset to your project's needs.

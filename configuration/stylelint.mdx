@@ -1,0 +1,96 @@
+---
+title: 'Stylelint configuration'
+description: 'CSS and SCSS lint rules via Stylelint'
+---
+
+Stylelint enforces consistent CSS and SCSS conventions across all style files in the project. It is invoked directly via `pnpm run lint:styles` for full project checks and via `stylelint --fix` in the staged-file pipeline for auto-fixable violations.
+
+## Full configuration
+
+```json stylelintrc.json
+{
+  "extends": [
+    "stylelint-config-standard-scss",
+    "stylelint-config-recess-order"
+  ],
+  "ignoreFiles": ["dist/**", "node_modules/**", ".angular/**"],
+  "rules": {
+    "color-no-invalid-hex": true,
+    "unit-no-unknown": true,
+    "property-no-unknown": true,
+    "declaration-block-no-duplicate-properties": [
+      true,
+      { "ignore": ["consecutive-duplicates-with-different-values"] }
+    ],
+    "color-named": "never",
+    "no-empty-source": null,
+    "no-descending-specificity": null,
+    "declaration-property-value-no-unknown": null,
+    "scss/no-global-function-names": null,
+    "scss/dollar-variable-pattern": null
+  }
+}
+```
+
+## Extends
+
+The configuration inherits from two preset packages before applying rule overrides.
+
+| Preset | Description |
+|--------|-------------|
+| `stylelint-config-standard-scss` | The official standard Stylelint config extended for SCSS. Enables a broad set of rules that enforce SCSS best practices, consistent syntax, and modern CSS conventions. |
+| `stylelint-config-recess-order` | Enforces a consistent property declaration order based on the Recess and Bootstrap ordering convention. Properties are grouped by type (positioning, box model, typography, visual) rather than listed arbitrarily. |
+
+## Ignore files
+
+The following paths are excluded from all Stylelint checks:
+
+- `dist/**` — compiled output, not authored source
+- `node_modules/**` — third-party dependencies
+- `.angular/**` — Angular CLI build cache
+
+## Rules
+
+<AccordionGroup>
+  <Accordion title="Validation rules">
+
+    These rules catch structural errors in CSS and SCSS that would result in invalid or silently broken styles.
+
+    | Rule | Value | Description |
+    |------|-------|-------------|
+    | `color-no-invalid-hex` | `true` | Rejects malformed hex color values such as `#fff00z` or `#ggg`. These are silently ignored by some browsers but represent authoring errors. |
+    | `unit-no-unknown` | `true` | Rejects CSS unit identifiers that are not recognized, such as `10pxs` or `5rems` (a typo of `rem`). |
+    | `property-no-unknown` | `true` | Rejects CSS property names that are not part of the CSS specification. Catches typos like `colour` or non-standard vendor properties that have been removed. |
+
+  </Accordion>
+
+  <Accordion title="Duplicate control">
+
+    | Rule | Value | Description |
+    |------|-------|-------------|
+    | `declaration-block-no-duplicate-properties` | `true` with `ignore: ["consecutive-duplicates-with-different-values"]` | Flags duplicate property declarations within the same rule block, which are typically copy-paste errors. The `ignore` option allows consecutive duplicates with different values, which is the standard pattern for progressive enhancement fallbacks — for example, declaring `color: #000` immediately followed by `color: var(--text)` so that browsers without CSS custom property support still receive a valid value. |
+
+  </Accordion>
+
+  <Accordion title="Style preference rules">
+
+    | Rule | Value | Description |
+    |------|-------|-------------|
+    | `color-named` | `"never"` | Disallows named CSS colors such as `red`, `blue`, or `transparent`. Named colors are ambiguous across design systems and make it harder to enforce a design token strategy. Use explicit hex, `rgb()`, or `hsl()` values instead, or reference SCSS variables that map to design tokens. |
+
+  </Accordion>
+
+  <Accordion title="Disabled rules">
+
+    These rules are explicitly set to `null` to disable them. Each is disabled for a specific reason relevant to Angular component-based projects.
+
+    | Rule | Reason for disabling |
+    |------|---------------------|
+    | `no-empty-source` | Angular component style files are commonly empty when the component has no local styles. This is a valid pattern in Angular and the rule would produce constant noise in new or minimal components. |
+    | `no-descending-specificity` | Angular's component encapsulation via `:host` and deep selectors creates specificity patterns that this rule misreads as errors. The rule produces high-noise, low-value output in Angular component styles. |
+    | `declaration-property-value-no-unknown` | Stylelint's awareness of modern CSS features and vendor-specific value syntaxes lags behind the CSS specification. This rule rejects valid values for newer properties and custom property syntax too aggressively. |
+    | `scss/no-global-function-names` | Many SCSS codebases still use legacy global functions such as `darken()`, `lighten()`, and `mix()` rather than the module-namespaced equivalents from `sass:color`. Enabling this rule would require migrating all such usages. |
+    | `scss/dollar-variable-pattern` | SCSS variable naming conventions vary by team. Enforcing a specific pattern (e.g., kebab-case) would conflict with projects that use camelCase or BEM-inspired variable names. |
+
+  </Accordion>
+</AccordionGroup>

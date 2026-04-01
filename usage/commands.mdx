@@ -1,0 +1,109 @@
+---
+title: "CLI commands"
+description: "All available commands for linting, formatting, and staged checks"
+---
+
+Use the commands below to run linters and formatters against your project. You can target individual tools with the npm scripts, or run everything at once with `vp check`.
+
+<Note>
+  `vp check` runs all configured linters and format checks across the entire project in a single pass. The individual scripts let you target a specific tool when you only need to check or fix one layer.
+</Note>
+
+## npm scripts
+
+The scripts below are defined in `package.json` and wrap the underlying `vp`, `eslint`, and `stylelint` invocations.
+
+<Tabs>
+  <Tab title="Report only">
+    These commands report problems without writing any changes to disk. Use them in CI or when you want to review issues before deciding whether to auto-fix.
+
+    | Script | Command | What it checks |
+    |--------|---------|----------------|
+    | `pnpm run lint` | `vp lint` | TypeScript and JavaScript lint issues |
+    | `pnpm run lint:html` | `eslint "src/**/*.html"` | Angular HTML template lint issues |
+    | `pnpm run lint:styles` | `stylelint "src/**/*.{css,scss}"` | CSS and SCSS lint issues |
+    | `pnpm run format` | `vp fmt --check` | Whether all files match the configured format |
+
+    <CodeGroup>
+
+    ```bash pnpm
+    pnpm run lint
+    pnpm run lint:html
+    pnpm run lint:styles
+    pnpm run format
+    ```
+
+    ```bash npm
+    npm run lint
+    npm run lint:html
+    npm run lint:styles
+    npm run format
+    ```
+
+    </CodeGroup>
+  </Tab>
+  <Tab title="Auto-fix">
+    These commands apply all safe automatic fixes in addition to reporting problems. They write changes to disk, so review the diff afterwards.
+
+    | Script | Command | What it fixes |
+    |--------|---------|---------------|
+    | `pnpm run lint:fix` | `vp lint --fix` | Auto-fixable TypeScript and JavaScript lint issues |
+    | `pnpm run lint:styles:fix` | `stylelint "src/**/*.{css,scss}" --fix` | Auto-fixable CSS and SCSS lint issues |
+    | `pnpm run format:fix` | `vp fmt` | Reformats all files in place |
+
+    <CodeGroup>
+
+    ```bash pnpm
+    pnpm run lint:fix
+    pnpm run lint:styles:fix
+    pnpm run format:fix
+    ```
+
+    ```bash npm
+    npm run lint:fix
+    npm run lint:styles:fix
+    npm run format:fix
+    ```
+
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Full project commands
+
+These commands run all configured tools across the entire project in a single invocation. They do not require the npm scripts to be set up first.
+
+| Command | Description |
+|---------|-------------|
+| `npx vp check` | Runs all linters and format checks across the entire project |
+| `npx vp check --fix` | Same as above, with auto-fix enabled |
+
+<CodeGroup>
+
+```bash check
+npx vp check
+```
+
+```bash check with fix
+npx vp check --fix
+```
+
+</CodeGroup>
+
+<Tip>
+  Run `npx vp check --fix` before creating a pull request to ensure every file passes linting and formatting in one step. This catches issues across TypeScript, HTML templates, stylesheets, and formatting before they reach review.
+</Tip>
+
+## Staged files only
+
+The `staged` command restricts checks to the files currently staged in Git. This is the command the pre-commit hook calls automatically, but you can also run it manually at any time.
+
+| Command | Description |
+|---------|-------------|
+| `npx vp staged` | Runs checks only on files currently staged in Git |
+
+```bash
+npx vp staged
+```
+
+This is faster than a full project check when you only want to validate what you are about to commit.

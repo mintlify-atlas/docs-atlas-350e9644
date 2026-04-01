@@ -1,0 +1,75 @@
+---
+title: 'ESLint template configuration'
+description: 'Angular HTML template linting rules via ESLint flat config'
+---
+
+Angular HTML templates require a separate linting pass from TypeScript files because they use Angular's template syntax, which standard parsers do not understand. The `eslint.config.ts` file configures ESLint with the `@angular-eslint/template-parser` and a set of rules that enforce accessibility and template quality standards.
+
+## Full configuration
+
+```typescript eslint.config.ts
+import templateParser from '@angular-eslint/template-parser';
+import templatePlugin from '@angular-eslint/eslint-plugin-template';
+
+export default [
+  {
+    files: ['**/*.html'],
+    languageOptions: {
+      parser: templateParser,
+    },
+    plugins: {
+      '@angular-eslint/template': templatePlugin,
+    },
+    rules: {
+      '@angular-eslint/template/button-has-type': 'error',
+      '@angular-eslint/template/alt-text': 'error',
+      '@angular-eslint/template/click-events-have-key-events': 'warn',
+      '@angular-eslint/template/table-scope': 'error',
+      '@angular-eslint/template/valid-aria': 'error',
+      '@angular-eslint/template/no-autofocus': 'warn',
+      '@angular-eslint/template/no-negated-async': 'warn',
+      '@angular-eslint/template/no-duplicate-attributes': 'error',
+    },
+  },
+];
+```
+
+## Config block structure
+
+The configuration exports a single flat config block that applies exclusively to HTML template files.
+
+| Property | Value | Description |
+|----------|-------|-------------|
+| `files` | `['**/*.html']` | Restricts this configuration block to HTML files only. TypeScript and other file types are unaffected. Angular component templates use the `.html` extension by default. |
+| `languageOptions.parser` | `@angular-eslint/template-parser` | Replaces ESLint's default JavaScript parser with the Angular template parser, which understands Angular-specific syntax such as structural directives (`*ngIf`, `*ngFor`), property bindings (`[prop]`), event bindings (`(event)`), and template reference variables (`#ref`). |
+| `plugins` | `{ '@angular-eslint/template': templatePlugin }` | Registers the `@angular-eslint/eslint-plugin-template` package under the `@angular-eslint/template` namespace, making its rules available under the `@angular-eslint/template/` prefix. |
+
+## Rules
+
+<AccordionGroup>
+  <Accordion title="Accessibility rules">
+
+    These rules enforce accessible markup patterns in Angular templates. Accessibility issues in templates are often invisible during manual testing but affect users of assistive technologies.
+
+    | Rule | Severity | Description |
+    |------|----------|-------------|
+    | `button-has-type` | error | Requires every `<button>` element to have an explicit `type` attribute (`button`, `submit`, or `reset`). Without a `type`, a button inside a form defaults to `type="submit"` and may trigger unexpected form submissions. |
+    | `alt-text` | error | Requires that `<img>`, `<area>`, and `<input type="image">` elements have a meaningful `alt` attribute. Screen readers use the alt text to describe images to users who cannot see them. An empty `alt=""` is acceptable for decorative images. |
+    | `click-events-have-key-events` | warn | Warns when an element with a `(click)` event binding does not also handle equivalent keyboard events such as `(keydown)` or `(keyup)`. Users who navigate with a keyboard need a way to trigger the same action. |
+    | `table-scope` | error | Requires that `<th>` elements have a valid `scope` attribute (`col`, `row`, `colgroup`, or `rowgroup`). The `scope` attribute tells screen readers whether a header cell applies to a column or a row. |
+    | `valid-aria` | error | Flags ARIA attributes that use invalid role names, state names, or property names. Invalid ARIA attributes are ignored by assistive technologies and can indicate a misunderstanding of the ARIA specification. |
+    | `no-autofocus` | warn | Warns on the `autofocus` attribute. Automatically moving keyboard focus can disorient screen reader users and users who rely on keyboard navigation, particularly on page load or when a component is dynamically inserted. |
+
+  </Accordion>
+
+  <Accordion title="Template quality rules">
+
+    These rules catch logic errors and anti-patterns specific to Angular template syntax.
+
+    | Rule | Severity | Description |
+    |------|----------|-------------|
+    | `no-negated-async` | warn | Warns on negated async pipe expressions such as `!(observable$ \| async)`. The async pipe returns `null` before the first emission, so negation produces `true` during the loading state, which is almost never the intended behavior. Use explicit null checks or a loading flag instead. |
+    | `no-duplicate-attributes` | error | Flags elements that have the same attribute specified more than once. Duplicate attributes are either a copy-paste error or indicate that two bindings are competing to set the same property, with only one taking effect. |
+
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,154 @@
+---
+title: 'Customizing rules'
+description: 'How to disable or override lint and format rules for your project'
+---
+
+Every project has edge cases where a rule needs to be suppressed or adjusted. This guide covers the most common customization patterns so you can adapt the defaults in `ng-viteplus-config` without losing the benefits of consistent enforcement.
+
+## Disabling a rule for one line
+
+When a single line genuinely requires an exception, suppress only that line rather than the whole file.
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    // oxlint-disable-next-line no-console
+    console.log('Intentional log');
+    ```
+  </Tab>
+  <Tab title="SCSS">
+    ```scss
+    /* stylelint-disable-next-line color-named */
+    color: red;
+    ```
+  </Tab>
+  <Tab title="HTML">
+    ```html
+    <!-- eslint-disable-next-line @angular-eslint/template/alt-text -->
+    <img src="decorative.png" />
+    ```
+  </Tab>
+</Tabs>
+
+## Disabling a rule for an entire file
+
+If a whole file needs an exception — for example, a legacy file being migrated incrementally — disable the rule at the top of the file.
+
+<Tabs>
+  <Tab title="TypeScript">
+    Add the comment at the very top of the file, before any imports:
+
+    ```typescript
+    // oxlint-disable no-console
+    ```
+  </Tab>
+  <Tab title="SCSS">
+    Wrap the entire file or a specific section with matching disable/enable comments:
+
+    ```scss
+    /* stylelint-disable color-named */
+    .legacy-class {
+      color: red;
+    }
+    /* stylelint-enable color-named */
+    ```
+  </Tab>
+  <Tab title="HTML">
+    Add the comment at the top of the template file:
+
+    ```html
+    <!-- eslint-disable @angular-eslint/template/alt-text -->
+    ```
+  </Tab>
+</Tabs>
+
+## Changing rule severity globally
+
+To change a rule's severity across the entire project, edit `.oxlintrc.json` directly. Changing severity in the config file ensures the new behaviour applies to every developer and in CI.
+
+To escalate `no-console` from a warning to an error:
+
+```json
+{
+  "rules": {
+    "no-console": "error"
+  }
+}
+```
+
+To turn a rule off entirely so it never reports:
+
+```json
+{
+  "rules": {
+    "no-console": "off"
+  }
+}
+```
+
+Valid severity values are `"error"`, `"warn"`, and `"off"`.
+
+## Changing the selector prefix
+
+<Note>
+  The `@angular-eslint/component-selector` and `@angular-eslint/directive-selector` rules are configured with the prefix `ngvpc` by default. If your project uses a different prefix — such as the Angular CLI default `app` — update both rules in `.oxlintrc.json`.
+</Note>
+
+```json
+"@angular-eslint/component-selector": ["error", {"type": "element", "prefix": "app", "style": "kebab-case"}],
+"@angular-eslint/directive-selector": ["error", {"type": "attribute", "prefix": "app", "style": "camelCase"}]
+```
+
+Replace `"app"` with whatever selector prefix your project uses. Both rules must be updated together to keep component and directive selectors consistent.
+
+## Relaxing rules in test files
+
+`ng-viteplus-config` ships with an `overrides` block in `.oxlintrc.json` that loosens certain rules for test and mock files. The defaults look like this:
+
+```json
+"overrides": [
+  {
+    "files": ["*.spec.ts", "*.mock.ts", "**/test/**", "**/mock/**"],
+    "rules": {
+      "no-console": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off"
+    }
+  }
+]
+```
+
+To extend the override, add more file patterns to the `"files"` array or add rules to the `"rules"` object inside the same block. For example, to also relax rules in story files and fixture directories:
+
+```json
+"overrides": [
+  {
+    "files": ["*.spec.ts", "*.mock.ts", "*.stories.ts", "**/test/**", "**/mock/**", "**/fixtures/**"],
+    "rules": {
+      "no-console": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-non-null-assertion": "off"
+    }
+  }
+]
+```
+
+Only relax rules in the override block that genuinely do not apply to test code. Keeping the main ruleset strict prevents test utilities from leaking into production files.
+
+## Changing formatter options
+
+To adjust code style preferences project-wide, edit `.oxfmtrc.json`. For example, to switch to double quotes and increase the line length limit:
+
+```json
+{
+  "singleQuote": false,
+  "printWidth": 120
+}
+```
+
+All developers and the CI pipeline read this file, so changes here apply consistently across the project. Refer to the oxfmt documentation for the full list of available options.
+
+<Tip>
+  Keep customizations minimal and add a short comment in the config file explaining why each exception exists. When every override is documented, new team members understand the intent immediately and reviewers can evaluate whether the exception is still necessary as the codebase evolves.
+</Tip>

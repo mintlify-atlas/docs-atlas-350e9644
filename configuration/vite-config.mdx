@@ -1,0 +1,62 @@
+---
+title: 'vite.config.ts'
+description: 'Staged-file tool mapping and lint ignore patterns via vite-plus'
+---
+
+The `vite.config.ts` file is the central configuration point for the `vp` CLI provided by `vite-plus`. It defines two sections: `lint`, which sets global ignore patterns, and `staged`, which maps file glob patterns to the commands that run against staged files before a commit.
+
+## Full configuration
+
+```typescript vite.config.ts
+import { defineConfig } from 'vite-plus';
+
+export default defineConfig({
+  lint: {
+    ignorePatterns: ['dist/**', '.angular/**', 'node_modules/**']
+  },
+  staged: {
+    '*.ts': 'vp lint --fix',
+    '*.{json,html}': 'vp fmt',
+    '*.html': 'eslint --fix',
+    '*.{css,scss}': ['vp fmt', 'stylelint --fix']
+  }
+});
+```
+
+## lint.ignorePatterns
+
+The `ignorePatterns` array specifies glob patterns that all `vp` lint commands skip. These patterns apply globally to every tool invoked through `vp lint`, including oxlint and Stylelint.
+
+| Pattern | Reason |
+|---------|--------|
+| `dist/**` | Compiled output produced by the Angular build. These files are generated from source and should not be linted. |
+| `.angular/**` | The Angular CLI's build cache directory. Contents are managed by the CLI and change frequently. |
+| `node_modules/**` | Third-party dependencies. Linting these files would be extremely slow and serves no purpose. |
+
+## staged mapping
+
+When you run `vp staged` (or it is triggered automatically by the pre-commit hook), `vite-plus` reads the `staged` object and determines which commands to run for each staged file. The keys are glob patterns and the values are either a single command string or an array of commands to run in sequence.
+
+<Note>
+A single staged file can match multiple globs. For example, a staged `.html` file matches both `*.{json,html}` and `*.html`, so it is formatted with `vp fmt` and then linted with `eslint --fix`. Commands from all matching globs run for that file.
+</Note>
+
+| Glob | Command(s) | What happens |
+|------|-----------|--------------|
+| `*.ts` | `vp lint --fix` | Runs oxlint against staged TypeScript files using the rules defined in `.oxlintrc.json`. The `--fix` flag automatically applies any fixes that oxlint can resolve without ambiguity, such as replacing `==` with `===` or removing `debugger` statements. The modified files are re-staged before the commit proceeds. |
+| `*.{json,html}` | `vp fmt` | Runs oxfmt against staged JSON and HTML files using the options from `.oxfmtrc.json`. The files are reformatted in place and re-staged. |
+| `*.html` | `eslint --fix` | Runs ESLint with the flat config from `eslint.config.ts` against staged HTML files. This applies Angular template rules covering accessibility and template quality. The `--fix` flag resolves any auto-fixable violations. |
+| `*.{css,scss}` | `vp fmt`, then `stylelint --fix` | First formats staged CSS and SCSS files with oxfmt, then runs Stylelint with `--fix` to resolve any auto-fixable style rule violations. The two commands run in sequence: formatting is applied before linting so that Stylelint evaluates already-formatted code. |
+
+## How vp staged works
+
+When `vp staged` is invoked, it performs the following steps:
+
+1. Reads the `staged` mapping from `vite.config.ts`.
+2. Queries the Git index for the list of currently staged files.
+3. For each staged file, checks which glob patterns in the `staged` mapping match the file path.
+4. Collects the commands from all matching globs and deduplicates them where possible.
+5. Runs the collected commands, passing only the matching staged files to each command rather than the full project.
+6. Re-stages any files that were modified by auto-fix commands so the commit reflects the corrected versions.
+
+Running commands only on staged files — rather than the entire project — keeps the pre-commit hook fast even in large codebases.

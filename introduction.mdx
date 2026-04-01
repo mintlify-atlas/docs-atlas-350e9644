@@ -1,0 +1,88 @@
+---
+title: "Introduction"
+description: "ng-viteplus-config is a baseline code quality configuration for Angular projects using the Vite+ (`vp`) toolchain."
+---
+
+## What is ng-viteplus-config?
+
+`ng-viteplus-config` is a ready-to-use code quality baseline for Angular applications built with the Vite+ (`vp`) toolchain. It wires together linting, formatting, and pre-commit enforcement for TypeScript, HTML templates, and SCSS — providing a single, coherent setup that every project can adopt without assembling the toolchain from scratch.
+
+The package ships pre-configured files for every tool it coordinates, so you spend time writing Angular code rather than tuning linter rules.
+
+## The problem it solves
+
+Large Angular codebases accumulate style inconsistencies, unsafe patterns, and accessibility regressions when each developer configures their own tools independently. Agreeing on a shared baseline is time-consuming, and keeping every tool in sync across TypeScript, Angular HTML templates, and SCSS involves maintaining several unrelated configuration files.
+
+`ng-viteplus-config` provides:
+
+- A **single install** that brings in all required tools and config files.
+- **Consistent rules** across all three languages in an Angular project.
+- **Automatic enforcement** via a Git pre-commit hook so violations never reach version control.
+
+## Tools included
+
+### `vite-plus` (`vp` CLI)
+
+`vite-plus` is the orchestration layer. The `vp` CLI runs linting, formatting, and staged-file checks through a unified interface. Rather than calling `oxlint`, `eslint`, and `stylelint` separately, `vp lint` and `vp fmt` coordinate all tools in the right order. The `vp staged` command is the entry point for the pre-commit hook and only checks files currently staged for commit, keeping hook execution fast.
+
+### oxlint
+
+`oxlint` is a high-performance TypeScript and JavaScript linter written in Rust. It includes built-in support for Angular-specific rules via the `@angular-eslint/eslint-plugin` JS plugin and TypeScript rules via the `typescript` plugin. `oxlint` enforces correctness, prevents common bugs (implicit `any`, unsafe optional chaining, debug statements), and applies Angular structural rules such as component/directive naming and lifecycle interface usage.
+
+### oxfmt
+
+`oxfmt` is a code formatter for TypeScript and JavaScript. It is configured via `.oxfmtrc.json` and enforces consistent indentation, trailing commas, single quotes, and print width across all `.ts` and `.json` files in the project.
+
+### stylelint
+
+`stylelint` lints CSS and SCSS files. The configuration extends `stylelint-config-standard-scss` for syntax rules and `stylelint-config-recess-order` for consistent property ordering. It catches invalid hex colors, unknown units and properties, and prevents named colors, keeping stylesheets maintainable and predictable.
+
+### ESLint (flat config)
+
+ESLint with the Angular template parser and `@angular-eslint/eslint-plugin-template` lints `.html` template files. The included `eslint.config.ts` uses the flat config format and enforces accessibility rules (alt text, ARIA validity, focus management) and template correctness rules (button types, duplicate attributes, negated async pipes).
+
+### Pre-commit hook
+
+The `scripts/pre-commit` shell script runs `vp staged` before every `git commit`. `vp staged` reads the tool-to-file-glob mapping from `vite.config.ts` and runs only the tools relevant to the files currently staged. If any tool reports unfixable errors, the commit is blocked. Many issues — formatting, fixable lint violations — are auto-corrected in place and re-staged automatically.
+
+## Config files included
+
+| File | Purpose |
+|---|---|
+| `.oxlintrc.json` | oxlint rules for TypeScript/JS including Angular and import plugins |
+| `.oxfmtrc.json` | oxfmt formatter settings (quotes, semicolons, print width, tab width) |
+| `stylelintrc.json` | Stylelint rules for CSS/SCSS including property ordering |
+| `eslint.config.ts` | ESLint flat config for Angular HTML template linting |
+| `vite.config.ts` | Maps file globs to tools for `vp staged` |
+| `scripts/pre-commit` | Git hook script that invokes `vp staged` |
+
+<Tip>
+  The `postinstall` script in `package.json` copies `scripts/pre-commit` to `.git/hooks/pre-commit` automatically every time you run `pnpm install`. No manual hook setup is required.
+</Tip>
+
+## Explore the configuration
+
+<CardGroup cols={2}>
+  <Card title="oxlint config" icon="shield-check" href="/configuration/oxlint">
+    TypeScript and Angular lint rules, plugin setup, and test file overrides.
+  </Card>
+  <Card title="Stylelint config" icon="paintbrush" href="/configuration/stylelint">
+    SCSS linting rules, property ordering, and ignored paths.
+  </Card>
+  <Card title="ESLint template config" icon="code" href="/configuration/eslint-templates">
+    Angular HTML template accessibility and correctness rules.
+  </Card>
+  <Card title="oxfmt config" icon="align-left" href="/configuration/oxfmt">
+    Formatter options for TypeScript and JSON files.
+  </Card>
+  <Card title="Vite config" icon="bolt" href="/configuration/vite-config">
+    Staged-file tool mapping and lint ignore patterns.
+  </Card>
+  <Card title="Pre-commit hook" icon="git-branch" href="/usage/pre-commit">
+    How the hook is installed and what happens when checks fail.
+  </Card>
+</CardGroup>
+
+<Note>
+  Ready to set up your project? Follow the [Quickstart](/quickstart) to install all packages, add config files, and verify the pipeline in under ten minutes.
+</Note>

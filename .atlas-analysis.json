@@ -1,0 +1,76 @@
+{
+  "projectType": "general",
+  "projectName": "ng-viteplus-config",
+  "projectDescription": "A baseline code quality configuration for Angular projects using Vite+, providing TypeScript linting via oxlint, SCSS linting via Stylelint, Angular HTML template linting via ESLint, formatting via oxfmt, and automated pre-commit enforcement.",
+  "theme": "luma",
+  "primaryColor": "#DD0031",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/oxlint",
+              "configuration/stylelint",
+              "configuration/eslint-templates",
+              "configuration/oxfmt",
+              "configuration/vite-config"
+            ]
+          },
+          {
+            "group": "Usage",
+            "pages": [
+              "usage/commands",
+              "usage/pre-commit"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/customization",
+              "guides/existing-projects"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "TypeScript and JavaScript linting with oxlint including Angular-specific rules",
+    "Angular HTML template linting via ESLint flat config with accessibility rules",
+    "CSS and SCSS linting with Stylelint using standard SCSS and recess-order presets",
+    "Code formatting with oxfmt (single quotes, semicolons, trailing commas)",
+    "Automated pre-commit hook via vite-plus staged-file orchestration",
+    "Staged-file-only checks for fast commit feedback",
+    "Test and mock file overrides that relax certain lint rules",
+    "Cross-platform postinstall script to auto-install the Git hook"
+  ],
+  "publicApiSurface": [
+    "vp lint — run oxlint across the project",
+    "vp lint --fix — run oxlint with auto-fix",
+    "vp fmt — format all files with oxfmt",
+    "vp fmt --check — check formatting without writing",
+    "vp staged — run staged-file checks (used by pre-commit hook)",
+    "vp check — run all linters and format checks",
+    "vp check --fix — run all linters and format checks with auto-fix",
+    "eslint src/**/*.html — lint Angular HTML templates",
+    "stylelint src/**/*.{css,scss} — lint style files",
+    ".oxlintrc.json — oxlint configuration",
+    ".oxfmtrc.json — oxfmt formatter configuration",
+    "stylelintrc.json — Stylelint configuration",
+    "eslint.config.ts — ESLint flat config for Angular templates",
+    "vite.config.ts — vite-plus staged-file mapping and lint ignore patterns",
+    "scripts/pre-commit — Git pre-commit hook script"
+  ]
+}

@@ -1,0 +1,108 @@
+---
+title: "Pre-commit hook"
+description: "How the Git pre-commit hook runs staged-file checks automatically"
+---
+
+The pre-commit hook runs `vp staged` automatically every time you run `git commit`. It checks only the files you have staged, applies auto-fixes where possible, and blocks the commit if any unfixable errors remain.
+
+## How it's installed
+
+The hook is installed automatically when you run `pnpm install`. The `postinstall` script in `package.json` handles the setup without any manual steps:
+
+```json
+"postinstall": "node -e require('fs').cpSync('scripts/pre-commit','.git/hooks/pre-commit');"
+```
+
+This single-line script uses Node's `fs.cpSync` to copy `scripts/pre-commit` directly into `.git/hooks/pre-commit`. Because `pnpm install` triggers `postinstall` automatically, any developer who clones the repository and installs dependencies will have the hook in place immediately.
+
+<Note>
+  Make sure your `.git/hooks/` directory exists before the first install. Git creates it automatically when you initialize a repository with `git init`, so this is only a concern if you manually removed the hooks directory.
+</Note>
+
+Re-running `pnpm install` at any time will overwrite the hook, which keeps it in sync if the `scripts/pre-commit` file is updated in the repository.
+
+## The hook script
+
+The file installed at `.git/hooks/pre-commit` contains two lines:
+
+```sh
+#!/bin/sh
+npx vp staged
+```
+
+The `#!/bin/sh` shebang tells the operating system to run the script with a POSIX-compatible shell. This keeps the hook portable across macOS, Linux, and WSL without requiring Bash.
+
+`npx vp staged` reads the `staged` section from `vite.config.ts`, resolves the list of currently staged files from Git, matches each file against the configured glob patterns, and runs the corresponding command for every match.
+
+## Staged-file flow
+
+<Steps>
+  <Step title="You run git commit">
+    Git begins the commit process and looks for an executable file at `.git/hooks/pre-commit`.
+  </Step>
+  <Step title="Git executes .git/hooks/pre-commit">
+    Because the file has execute permission (`755`), Git runs it directly using the POSIX shell specified in the shebang.
+  </Step>
+  <Step title="vp staged reads the staged section from vite.config.ts">
+    The `staged` section maps glob patterns to commands. `vp staged` loads this configuration to know which tools to run and for which file types.
+  </Step>
+  <Step title="It resolves the list of currently staged files from Git">
+    `vp staged` calls `git diff --cached --name-only` internally to get the exact set of files in the index at this moment.
+  </Step>
+  <Step title="Each staged file is matched against the configured glob patterns">
+    Every file path is tested against each glob in the `staged` configuration. A single file can match more than one glob, and all matching commands will run.
+  </Step>
+  <Step title="The corresponding command(s) run for each match">
+    Commands execute in the order they appear in the configuration. Auto-fix commands write changes back to disk and re-stage the modified files automatically.
+  </Step>
+  <Step title="If all commands exit 0, the commit proceeds">
+    Git continues with the commit, recording all staged content including any files that were auto-fixed and re-staged by the hook.
+  </Step>
+  <Step title="If any command exits non-zero, the commit is blocked">
+    Git aborts the commit. No files are committed. The error output from the failing command remains visible in the terminal so you can identify the issue.
+  </Step>
+</Steps>
+
+## Staged glob mapping
+
+The `staged` section of `vite.config.ts` maps file patterns to commands. The mapping applied by default is:
+
+| Glob | Command(s) | What happens |
+|------|-----------|--------------|
+| `*.ts` | `vp lint --fix` | TypeScript files are linted with oxlint; auto-fixable issues are fixed in place |
+| `*.{json,html}` | `vp fmt` | JSON and HTML files are reformatted to match the project's oxfmt configuration |
+| `*.html` | `eslint --fix` | HTML files are also linted for Angular template issues; auto-fixable violations are fixed |
+| `*.{css,scss}` | `vp fmt`, then `stylelint --fix` | Stylesheets are formatted first, then linted; both steps apply auto-fixes |
+
+<Note>
+  A single staged file can match multiple globs, and every matching command will run for that file. For example, `component.html` matches both `*.{json,html}` (triggering `vp fmt`) and `*.html` (triggering `eslint --fix`), so both commands execute in sequence.
+</Note>
+
+## When the commit is blocked
+
+If the hook exits non-zero, the terminal will show the error output from the failing command. To resolve a blocked commit:
+
+<Steps>
+  <Step title="Read the error output">
+    Identify the file path, line number, and rule name reported by the linter. Most tools print output in the form `file.ts:12:5 error rule-name`.
+  </Step>
+  <Step title="Fix the issue manually">
+    Open the file and correct the problem. If the tool supports auto-fix for this rule, you can also re-run the relevant fix command directly (for example, `pnpm run lint:fix` or `pnpm run lint:styles:fix`).
+  </Step>
+  <Step title="Stage the fixed file">
+    ```bash
+    git add path/to/fixed-file.ts
+    ```
+    The hook only checks staged files, so the fix must be staged before the next attempt.
+  </Step>
+  <Step title="Run git commit again">
+    ```bash
+    git commit
+    ```
+    The hook runs again against the updated staged files. If all checks pass, the commit proceeds.
+  </Step>
+</Steps>
+
+<Warning>
+  If oxlint or ESLint report errors that cannot be auto-fixed — such as logic errors, type mismatches, or violations that require a developer decision — the commit remains blocked until you fix them manually. Auto-fix only handles stylistic and syntactic issues that have a deterministic correction.
+</Warning>
